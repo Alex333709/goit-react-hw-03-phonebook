@@ -5,47 +5,44 @@ import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 import { AppContainer } from './App.styled';
 
+const saveToLocalStorage = (key, value) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+const getFromLocalStorage = key => {
+  return JSON.parse(localStorage.getItem(key));
+};
+
 export class App extends Component {
   state = {
-    contacts: [],
-
+    contacts: getFromLocalStorage('contacts') || [],
     filter: '',
   };
 
-  componentDidMount() {
-    const contacts = JSON.parse(localStorage.getItem('contacts'));
-    if (contacts) {
-      this.setState({ contacts });
+  componentDidUpdate(_, prevState) {
+    const { contacts } = this.state;
+    if (contacts !== prevState.contacts) {
+      saveToLocalStorage('contacts', contacts);
     }
   }
 
-  componentDidUpdate(_, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
   createContacts = dataForm => {
-    const existingContact = this.state.contacts.find(
+    const { contacts } = this.state;
+    const existingContact = contacts.some(
       contact => contact.name === dataForm.name
     );
 
     if (existingContact) {
-      return alert(`${dataForm.name} is already in contacts`);
+      alert(`${dataForm.name} is already in contacts`);
+      return;
     }
-    const newContact = {
-      ...dataForm,
-      id: nanoid(),
-    };
 
-    this.setState(prev => ({
-      contacts: [newContact, ...prev.contacts],
-    }));
+    const newContact = { ...dataForm, id: nanoid() };
+    this.setState({ contacts: [newContact, ...contacts] });
   };
 
   handleFilter = ({ target: { value } }) => {
-    this.setState({
-      filter: value,
-    });
+    this.setState({ filter: value });
   };
 
   deleteContacts = id => {
@@ -56,7 +53,6 @@ export class App extends Component {
 
   render() {
     const { contacts, filter } = this.state;
-
     const filteredContacts = contacts.filter(contact =>
       contact.name.toLowerCase().includes(filter.toLowerCase())
     );
@@ -66,12 +62,10 @@ export class App extends Component {
         <div>
           <h1>Phonebook</h1>
           <ContactForm createContacts={this.createContacts} />
-
           <h2>Contacts</h2>
-
-          <Filter handleFilter={this.handleFilter} filter={this.state.filter} />
+          <Filter handleFilter={this.handleFilter} filter={filter} />
           <ContactList
-            contacts={this.state.contacts}
+            contacts={contacts}
             deleteContacts={this.deleteContacts}
             filteredContacts={filteredContacts}
           />
