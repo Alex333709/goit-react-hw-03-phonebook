@@ -14,3 +14,4 @@ const Contact = ({ contact, deleteContacts }) => {
 };
 
 export default Contact;
+// start
